@@ -1,0 +1,21 @@
+::ng-deep .cdk-drag-preview {
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    border: 1px solid #ccc;
+    background: white;
+  }
+  ::ng-deep .cdk-drag-placeholder {
+    opacity: 0;
+  }
+
+  .cdk-drag-preview {
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    padding: 10px;
+    background: white;
+    opacity: 0.9;
+  }
+  
+  .cdk-drag-placeholder {
+    opacity: 0;
+  }
+  

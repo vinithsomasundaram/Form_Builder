@@ -1,0 +1,212 @@
+<div cdkDropListGroup class="flex flex-col md:flex-row h-screen">
+  <!-- Left Panel -->
+  <aside class="w-full md:w-1/4 border-r border-gray-200 p-4">
+    <div class="flex justify-between items-center mb-[5px]">
+      <span class="text-base font-medium">Field Groups</span>
+      <div class="flex items-center cursor-pointer" (click)="openFileds()">
+        <span class="material-icons text-[17px] mr-[1px] font-normal !text-sky-500">add_circle</span>
+        <span class="text-base !text-sky-500 font-normal text-[14px]">Create New</span>
+      </div>
+    </div>
+
+    <div *ngIf="showFields" class="mb-4">
+      <input [(ngModel)]="newGroupName" placeholder="Group Name" class="add-formTxt" />
+      <textarea [(ngModel)]="newGroupDescription" placeholder="Description" class="add-formTxt"></textarea>
+      <div class="flex space-x-2 mt-2">
+        <button (click)="addGroup()" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+          Save
+        </button>
+        <button (click)="cancelNewGroup()"
+          class="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <ul class="pt-[20px]">
+      <li *ngFor="let group of fieldGroups" (click)="selectGroup(group)" (mousedown)="$event.stopPropagation()"
+        class="cursor-pointer border border-[#ccc] py-1 mb-2 transition-colors rounded-[5px] px-1  hover:text-gray-900"
+        [ngClass]="group.id === selectedGroup?.id 
+          ? 'border border-blue-500 text-blue-600 bg-sky-100' 
+          : 'bg-white text-gray-700'">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-1">
+            <span class="material-icons text-[16px] !text-[#939393] pt-[2px]">drag_indicator</span>
+            <p [ngClass]="group.id === selectedGroup?.id 
+            ? 'text-blue-500' 
+            : 'bg-white text-sm text-gray-500'">{{ group.name }}</p>
+            <span *ngIf="group.description" class="text-sm text-gray-500">-</span>
+            <p [ngClass]="group.id === selectedGroup?.id 
+            ? 'text-blue-500' 
+            : 'bg-white text-sm text-gray-500'">{{ group.description }}</p>
+          </div>
+          <span (click)="deleteGroup(group); $event.stopPropagation()"
+            class="material-icons text-[18px] !text-[#939393] pt-[2px] cursor-pointer">delete</span>
+        </div>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Middle Panel-->
+  <main class="w-full md:w-2/4 flex-grow p-[25px] bg-[#f1f1f1] overflow-auto">
+    <div *ngIf="selectedGroup" class="flex bg-white h-[60px] p-[10px] items-center justify-between mb-4">
+      <div class="flex text-gray-500">
+        <h2 class="text-xl font-semibold mb-1 text-gray-800">{{ selectedGroup.name }}</h2>
+        <h2 *ngIf="selectedGroup.description" class="text-xl font-semibold mb-1 text-gray-800">-{{
+          selectedGroup.description }}</h2>
+      </div>
+      <div class="flex space-x-1 text-gray-500">
+        <span class="material-icons !pt-[8px] icon-btn">edit</span>
+        <span class="material-icons !pt-[6px] !text-[18px] icon-btn">delete</span>
+        <button (click)="exportForm()" class="ml-auto px-3 py-1 bg-blue-500 text-white rounded text-sm">
+          Export Json
+        </button>
+      </div>
+    </div>
+
+
+    <div cdkDropList #middleCanvas="cdkDropList" [cdkDropListData]="selectedGroup?.fields || []"
+      [cdkDropListConnectedTo]="[rightElements]" [cdkDropListDisabled]="!selectedGroup"
+      (cdkDropListDropped)="drop($event)"
+      class="min-h-[500px] bg-gray-100 border border-dashed border-gray-300 rounded">
+      <ng-container *ngIf="selectedGroup; else noGroup">
+        <div *ngFor="let field of selectedGroup.fields" cdkDrag
+          class="flex items-center justify-between border p-2 rounded mb-2 bg-white shadow-sm">
+
+          <!-- Left: Field info -->
+          <div class="flex items-center space-x-2 w-[100%]">
+            <!-- Icon -->
+            <span class="material-icons h-[35px] w-[28px] pt-[10px] pl-[5px] pr-[1px] text-[16px] text-[#939393]">
+              drag_indicator
+            </span>
+
+            <!-- Field Label and Placeholder -->
+            <div class="flex flex-col space-y-1 w-[90%]">
+              <!-- Editable Label -->
+              <input type="text" [(ngModel)]="field.label" [disabled]="true" placeholder="Field label"
+                class="text-base font-medium text-gray-800 border border-transparent focus:border-blue-400 focus:outline-none rounded px-1" />
+
+              <input *ngIf="field.type === 'Single Line Text'" type="text" [(ngModel)]="field.value"
+                [ngModelOptions]="{ standalone: true }" [required]="field.required"
+                class="w-full border px-2 py-1 rounded text-sm" [attr.maxLength]="null"
+                [placeholder]="field.placeholder || 'Type here...'" />
+
+              <p *ngIf="field.type === 'Single Line Text' && field.maxLength && field.value?.length > 20"
+                class="text-xs text-red-500 mt-1">
+                You have exceeded the maximum of {{ field.maxLength }} characters.
+              </p>
+
+              <!-- Optional: live character counter -->
+              <p *ngIf="field.maxLength" class="text-xs text-gray-400 text-right">
+                {{ field.value?.length || 0 }}/{{ field.maxLength }} characters
+              </p>
+
+              <!-- Multi Line Text -->
+              <textarea *ngIf="field.type === 'Multi Line Text'" [(ngModel)]="field.value"
+                [attr.maxLength]="field.maxLength" [required]="field.required"
+                class="w-full border px-2 py-1 rounded text-sm"
+                [placeholder]="field.placeholder || 'Type here...'"></textarea>
+
+              <!-- Date -->
+              <input *ngIf="field.type === 'Date'" type="date" [(ngModel)]="field.value" [required]="field.required"
+                class="w-full border px-2 py-1 rounded text-sm" />
+
+              <!-- Time -->
+              <input *ngIf="field.type === 'Time'" type="time" [(ngModel)]="field.value" [required]="field.required"
+                class="w-full border px-2 py-1 rounded text-sm" />
+
+              <!-- Date & Time -->
+              <input *ngIf="field.type === 'Date & Time'" type="datetime-local" [(ngModel)]="field.value"
+                [required]="field.required" class="w-full border px-2 py-1 rounded text-sm" />
+
+              <!-- Dropdown -->
+              <select *ngIf="field.type === 'Dropdown'" [(ngModel)]="field.value" [required]="field.required"
+                class="w-full border px-2 py-1 rounded text-sm">
+                <option value="" disabled selected>Select an option</option>
+                <option *ngFor="let option of field.options?.split(',')" [value]="option.trim()">
+                  {{ option.trim() }}
+                </option>
+              </select>
+
+              <!-- Upload -->
+              <input *ngIf="field.type === 'Upload'" type="file" (change)="onFileSelect($event, field)"
+                class="w-full border px-2 py-1 rounded text-sm" />
+
+              <!-- Preview (image only) -->
+              <div *ngIf="field.previewUrl" class="mt-2">
+                <img [src]="field.previewUrl" alt="Preview" class="max-h-40 rounded border" />
+              </div>
+
+            </div>
+
+
+
+          </div>
+
+
+          <!-- Right: Action icons -->
+          <div class="flex space-x-1 text-gray-500">
+            <span (click)="selectField(field); $event.stopPropagation()" class="material-icons icon-btn">
+              edit
+            </span>
+            <span (click)="selectField(field); $event.stopPropagation()" class="material-icons icon-btn">
+              content_copy
+            </span>
+            <span (click)="removeField(field); $event.stopPropagation()" class="!pt-[0px] material-icons icon-btn !text-[18px]">
+              delete
+            </span>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <ng-template #noGroup>
+      <div class="absolute top-[40%] left-1/2 transform -translate-x-1/2 text-gray-400 italic">
+        <p>Select a field group to start adding elements.</p>
+      </div>
+    </ng-template>
+  </main>
+
+  <!-- Right Panel -->
+  <aside class="w-full md:w-1/4 border-l border-gray-200 overflow-auto p-2">
+    <div class="mb-4">
+      <h3 class="pl-[5px] text-base font-semibold text-gray-400  mb-2">
+        Elements
+      </h3>
+      <div class="relative w-full">
+        <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
+          search
+        </span>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Search elements..."
+          class="w-full pl-10 pr-3 py-2 bg-gray-100 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+    </div>
+
+    <div cdkDropList #rightElements="cdkDropList" [cdkDropListData]="flattenAvailableElements()"
+      [cdkDropListConnectedTo]="[middleCanvas]" class="space-y-2">
+      <ng-container *ngFor="let group of availableElementGroups">
+        <h3 class="pl-[5px] border-b border-b-[#f3f3f3] text-xs font-semibold text-gray-400 uppercase mb-2">
+          {{ group.category }}
+        </h3>
+        <ul class="mb-4 space-y-2">
+          <li *ngFor="let element of group.elements | filterElements:searchTerm" cdkDrag
+            [cdkDragDisabled]="!selectedGroup" [cdkDragData]="element"
+            class="flex items-center p-2 rounded hover:bg-gray-100 cursor-move">
+            <div class="flex items-center space-x-2">
+              <span
+                class="material-icons bg-gray-100 h-[35px] w-[28px] pt-[10px] pl-[5px] pr-[1px] text-[16px] text-[#939393] pr-[2px]">
+                {{ element.icon }}
+              </span>
+              <div>
+                <p class="text-sm font-medium">{{ element.displayName }}</p>
+                <p class="text-xs text-gray-500">{{ element.type }}</p>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </ng-container>
+    </div>
+  </aside>
+</div>

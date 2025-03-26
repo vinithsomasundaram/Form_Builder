@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;/* You can add global styles to this file, and also import other style files */
+
+.icon-btn {
+  @apply text-[15px] text-custom-gray pt-[2px] cursor-pointer;
+}
+
+
+.add-formTxt {
+  @apply border p-1 mb-1 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-sm;
+}
