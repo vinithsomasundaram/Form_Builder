@@ -15,10 +15,18 @@ A drag-and-drop form builder built with Angular, Angular CDK, and Tailwind CSS.
 - Filter-Pipes Service Added
 
 
-
+Steps to buikd teh project:
+1. Clone the Repository Link
+2. Installation
+   Need To Install Node Js Version Of V 20.19.0
+4. Run the project locally
+5. Demo
+   
 
 #Clone the Repository
 
 ```bash
 git clone https://github.com/your-username/form-builder-app.git
 cd form-builder-app
+
+
