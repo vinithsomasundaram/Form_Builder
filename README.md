@@ -26,7 +26,8 @@ Steps to buikd teh project:
 #Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/form-builder-app.git
-cd form-builder-app
+git clone https://github.com/vinithsomasundaram/Form_Builder.git
+cd Form_Builder
+
 
 
