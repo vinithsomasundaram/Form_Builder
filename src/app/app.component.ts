@@ -1,34 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
-
-interface FieldGroup {
-  id: number;
-  name: string;
-  description: string;
-  fields: FormField[];
-}
-
-interface FormField {
-  id: number;
-  type: string;
-  label: string;
-  placeholder: string;
-  required: boolean;
-  options?: string;
-  maxLength?: number;
-  validation?: 'email' | 'text';
-  value?: any;
-  previewUrl?: string | null; // 
-}
-
-interface AvailableElement {
-  type: string;
-  displayName: string;
-}
-
-
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -36,17 +8,20 @@ interface AvailableElement {
 })
 export class AppComponent implements OnInit {
 
-  fieldGroups: FieldGroup[] = [];
+
   selectedGroup: any;
   newGroupName = '';
-  isPreviewMode: boolean = false;
   newGroupDescription = '';
+  isPreviewMode: boolean = false;
   searchTerm: any;
+  selectedField: any = null;
+  showFields: boolean = false;
+
   availableElementGroups = [
     {
       category: 'Text Fields',
       elements: [
-        { type: 'Single Line Text',displayName: 'Single Line Text', icon: 'format_size' },
+        { type: 'Single Line Text', displayName: 'Single Line Text', icon: 'format_size' },
         { type: 'Multi Line Text', displayName: 'Multi Line Text', icon: 'segment' }
       ]
     },
@@ -74,22 +49,29 @@ export class AppComponent implements OnInit {
     }
   ];
 
-  transform(elements: any[], searchTerm: string): any[] {
-    if (!searchTerm) return elements;
-    return elements.filter(el =>
-      el.displayName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
-
-  // This is the field selected in the middle pane for property editing.
-  selectedField: FormField | null = null;
+  fieldGroups: {
+    id: number;
+    name: string;
+    description: string;
+    fields: {
+      id: number;
+      type: string;
+      label: string;
+      placeholder: string;
+      required: boolean;
+      options?: string;
+      maxLength?: number;
+      validation?: 'email' | 'text';
+      value?: any;
+      previewUrl?: string | null;
+    }[];
+  }[] = [];
 
   ngOnInit(): void {
     const savedGroups = localStorage.getItem('fieldGroups');
     if (savedGroups) {
       this.fieldGroups = JSON.parse(savedGroups);
       if (this.fieldGroups.length > 0) {
-        // Select the first group by default
         this.selectedGroup = this.fieldGroups[0];
       }
     }
@@ -103,23 +85,23 @@ export class AppComponent implements OnInit {
     localStorage.setItem('fieldGroups', JSON.stringify(this.fieldGroups));
   }
 
-  openFileds(){
+  openFileds() {
     this.showFields = true;
   }
-  cancelNewGroup(){
+
+  cancelNewGroup() {
     this.showFields = false;
   }
-  showFields: Boolean = false;
+
   addGroup() {
     this.showFields = true;
     if (this.newGroupName.trim()) {
-      const newGroup: FieldGroup = {
+      const newGroup = {
         id: new Date().getTime(),
         name: this.newGroupName,
         description: this.newGroupDescription,
         fields: []
       };
-      ;
       this.fieldGroups.push(newGroup);
       this.saveGroups();
       this.newGroupName = '';
@@ -128,12 +110,13 @@ export class AppComponent implements OnInit {
     }
   }
 
-  onInputChange(field: FormField) {
+  onInputChange(field: any) {
     if (field.maxLength && field.value?.length > field.maxLength) {
       field.value = field.value.slice(0, field.maxLength);
     }
   }
-  deleteGroup(group: FieldGroup) {
+
+  deleteGroup(group: any) {
     this.fieldGroups = this.fieldGroups.filter(g => g.id !== group.id);
     if (this.selectedGroup?.id === group.id) {
       this.selectedGroup = null;
@@ -142,25 +125,19 @@ export class AppComponent implements OnInit {
     this.saveGroups();
   }
 
-  selectGroup(group: FieldGroup) {
+  selectGroup(group: any) {
     setTimeout(() => {
       this.selectedGroup = group;
       this.selectedField = null;
-      console.log("✅ Selected group:", group.name);
     });
   }
 
   drop(event: CdkDragDrop<any[]>) {
-    console.log("📦 Drop event:", event);
-
-    if (!this.selectedGroup) {
-      console.warn("❌ No group selected — cannot drop field.");
-      return;
-    }
+    if (!this.selectedGroup) return;
 
     if (event.previousContainer !== event.container) {
-      const draggedElement = event.previousContainer.data[event.previousIndex] as AvailableElement;
-      const newField: FormField = {
+      const draggedElement = event.previousContainer.data[event.previousIndex];
+      const newField = {
         id: new Date().getTime(),
         type: draggedElement.type,
         label: draggedElement.displayName,
@@ -178,17 +155,13 @@ export class AppComponent implements OnInit {
     }
   }
 
-
-  // Called when a field is clicked in the canvas.
-  selectField(field: FormField) {
+  selectField(field: any) {
     this.selectedField = field;
-    console.log("check")
   }
 
-  // Remove a field from the selected group.
-  removeField(field: FormField) {
+  removeField(field: any) {
     if (this.selectedGroup) {
-      this.selectedGroup.fields = this.selectedGroup?.fields.filter((f: any) => f.id !== field.id);
+      this.selectedGroup.fields = this.selectedGroup.fields.filter((f: any) => f.id !== field.id);
       this.saveGroups();
       if (this.selectedField?.id === field.id) {
         this.selectedField = null;
@@ -200,12 +173,10 @@ export class AppComponent implements OnInit {
     this.selectedField = null;
   }
 
-  onFileSelect(event: any, field: FormField) {
+  onFileSelect(event: any, field: any) {
     const file = event.target.files?.[0];
     if (file) {
       field.value = file;
-      console.log('📁 File selected:', file.name);
-  
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = () => {
@@ -217,9 +188,8 @@ export class AppComponent implements OnInit {
       }
     }
   }
-  
 
-  enforceMaxLength(field: FormField) {
+  enforceMaxLength(field: any) {
     if (field.maxLength && field.value?.length > field.maxLength) {
       field.value = field.value.substring(0, field.maxLength);
     }
@@ -229,14 +199,10 @@ export class AppComponent implements OnInit {
     const data = JSON.stringify(this.fieldGroups, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-  
     const a = document.createElement('a');
     a.href = url;
     a.download = 'form-config.json';
     a.click();
-  
     URL.revokeObjectURL(url);
-
-
   }
 }
